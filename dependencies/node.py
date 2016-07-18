@@ -12,8 +12,6 @@ class node(object):
     def __repr__(self):
         return '<tree node representation>'
 
-
     def saveTree(self, path):
-        f = open(path, 'w')
-        f.write(str(self))
-        f.close()
+        with open(path, 'w') as f:
+            f.write(str(self))
