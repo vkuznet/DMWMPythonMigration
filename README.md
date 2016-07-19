@@ -17,16 +17,29 @@ In tree graph:
 -No means that it isn't
 
 Contains 2 files: 
+
 dependencyWriter.py and node.py
 
 dependencyWriter.py Has one required argument: -path 
+
 And two optional: -rName and -tName
+
 For more info run:
+
 python3 dependencyWriter.py -h
 
 results.txt - list of dependencies with annotations if they are supported in python3
-tree.txt- dependencies tree graph
 python3AvailableLibs.txt - available python3 libraries
+tree.txt- dependencies tree graph
+
+Example:
+```
+'dependencies'
+  -|'sitedb.spec- no'
+  -|  -|'cherrypy- ok'
+  -|  -|  -|'python- no'
+  -|  -|  -|  -|'expat- no'
+```
 
 
 
