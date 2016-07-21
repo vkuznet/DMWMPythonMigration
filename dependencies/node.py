@@ -11,7 +11,7 @@ class node(object):
     def __str__(self, level=0):
         """
         Convert dependency tree to printable version
-            
+
         :param level: set the level of tree
         :return: ret printable tree
         """
