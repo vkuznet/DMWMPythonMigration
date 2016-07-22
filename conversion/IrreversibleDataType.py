@@ -32,8 +32,12 @@ class IrreversibleType(Enum):
 
 
 class DataTypes(Enum):
+    """
+     Enumerator for cheetah expresion types that might be problematic
+     """
     echo = ["#echo"]
-    importFrom=["#import, #from"]
-    slurp=["#slurp"]
+    importFrom = ["#import, #from"]
+    slurp = ["#slurp"]
     block = ["#block"]
-
+    ifBlock = ["#if"]
+    stop = ["#stop"]

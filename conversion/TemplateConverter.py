@@ -1,3 +1,5 @@
+import argparse
+import os
 import re
 
 from FileReader import FileReader
@@ -11,14 +13,17 @@ class TemplateConverter(object):
     Converts cheetah templates to jinja2
     Code that has to be converted manualy is saved in separate file
     """
-    irreversibleDataList = []
     nrOfPythonConversions = 0
 
     def __init__(self, fileLines, fileName):
+        self.irreversibleDataList = []
         self.fileLines = fileLines
+        self.filename = fileName
         lineNumbers = self.getChangeableLineNumbers()
         self.convert(lineNumbers)
-        self.filename = fileName
+        # add replaced code to irreversibleData object
+        for irreversibleData in self.irreversibleDataList:
+            irreversibleData.codeReplacment = self.fileLines[irreversibleData.lineStart:irreversibleData.lineEnd + 1]
 
     def getChangeableLineNumbers(self):
         """
@@ -51,10 +56,10 @@ class TemplateConverter(object):
                 while (type.value[1] not in self.fileLines[lineEnd]):
                     lineEnd += 1
                     if (lineEnd > lineNr + 20 or len(self.fileLines) < lineEnd):
-                        print("Failed to find the end of block in file: " + fileName + "of type: " + type.value[0])
+                        print("Failed to find the end of block in file: " + self.filename + "of type: " + type.value[0])
             # adds info about lines to the list
             self.irreversibleDataList.append(
-                IrreversibleData(fileName, lineNr, lineEnd, type, self.fileLines[lineNr:lineEnd + 1]))
+                IrreversibleData(self.filename, lineNr, lineEnd, type, self.fileLines[lineNr:lineEnd + 1]))
 
     def convert(self, lineNumbers):
         """
@@ -141,8 +146,10 @@ class TemplateConverter(object):
         while ("#end block" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
             if (lineNrEnd > lineNr + 15 or len(self.fileLines) < lineNrEnd):
-                self.irreversibleDataList.append(IrreversibleData())
-                print("Failed to convert block")
+                irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.block,
+                                                    self.fileLines[lineNr:lineNrEnd + 1])
+                self.irreversibleDataList.append(irreversibleData)
+                print("Failed to convert block in " + self.filename)
                 return
         changeableWords = re.search("#end block( \w+)?", self.fileLines[lineNrEnd])
         replacment = "{% endblock %}"
@@ -159,8 +166,11 @@ class TemplateConverter(object):
         lineNrEnd = lineNr
         while ("#end if" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
-            if (lineNrEnd > lineNr + 10 or len(self.fileLines) < lineNrEnd):
-                print("Failed to convert if block")
+            if (lineNrEnd > lineNr + 20 or len(self.fileLines) < lineNrEnd):
+                irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.ifBlock,
+                                                    self.fileLines[lineNr:lineNrEnd + 1])
+                self.irreversibleDataList.append(irreversibleData)
+                print("Failed to convert if block in " + self.filename)
                 return
             if "#if" in self.fileLines[lineNrEnd]:
                 self.convertIfBlock(lineNrEnd)
@@ -186,7 +196,10 @@ class TemplateConverter(object):
             deletableLines.append(lineNrEnd)
             lineNrEnd += 1
             if (lineNrEnd < lineNr - 10):
-                print("Failed to convert stop")
+                irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.stop,
+                                                    self.fileLines[lineNr:lineNrEnd + 1])
+                self.irreversibleDataList.append(irreversibleData)
+                print("Failed to convert stop in " + self.filename)
                 return
         for line in deletableLines:
             self.fileLines[line] = ""
@@ -316,7 +329,8 @@ class TemplateConverter(object):
         for changeablePart in changeableParts:
             self.nrOfPythonConversions += 1
             nameOfPlaceHolder = "echo" + str(self.nrOfPythonConversions)
-            self.irreversibleDataList.append(IrreversibleData(self.filename, lineNr, lineNr, DataTypes.echo, [self.fileLines[lineNr]]))
+            irreversibleData = IrreversibleData(self.filename, lineNr, lineNr, DataTypes.echo, self.fileLines[lineNr])
+            self.irreversibleDataList.append(irreversibleData)
             self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart,
                                                                     "{{" + nameOfPlaceHolder + "}}")
 
@@ -364,14 +378,20 @@ class TemplateConverter(object):
         while ("{% endfor" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
             if (lineNrEnd > lineNr + 10):
+                irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.slurp,
+                                                    self.fileLines[lineNr:lineNrEnd + 1])
+                self.irreversibleDataList.append(irreversibleData)
                 print("Failed to convert slurp")
-                break
+                return
 
         while ("{% for " not in self.fileLines[lineNrStart]):
             lineNrStart -= 1
             if (lineNrEnd < lineNr - 10):
-                print("Failed to convert slurp")
-                break
+                irreversibleData = IrreversibleData(self.filename, lineNrEnd, lineNr, DataTypes.slurp,
+                                                    self.fileLines[lineNr:lineNrEnd + 1])
+                self.irreversibleDataList.append(irreversibleData)
+                print("Failed to convert slurp in " + self.filename)
+                return
 
         self.fileLines[lineNrEnd] = self.fileLines[lineNrEnd].replace("{% endfor", "{%- endfor")
         self.fileLines[lineNrStart] = self.fileLines[lineNrStart].replace("%}", "-%}")
@@ -392,20 +412,47 @@ class TemplateConverter(object):
         Removes import from template, adds information about it to irreversibleDataList
         :param lineNr: number of line
         """
-        self.irreversibleDataList.append(IrreversibleData(self.filename, lineNr, lineNr, DataTypes.importFrom, self.fileLines[lineNr]))
+        self.irreversibleDataList.append(
+            IrreversibleData(self.filename, lineNr, lineNr, DataTypes.importFrom, [self.fileLines[lineNr]]))
         # clean the line
         self.fileLines[lineNr] = ""
 
 
+def main(opts):
+    "Main function"
+    if not [os.path.isdir(x) for x in vars(opts)]:
+        raise IOError("No such directory")
+    # add slash at the end of directory
+    slashIt = lambda x: x if x.endswith("/") else x + "/"
+    path = slashIt(opts.path)
+    pathConverted = slashIt(opts.pathConverted)
+    pathManual = slashIt(opts.pathManual)
+
+    manualReplacments = []
+    for name in FileReader.getFileNames(path):
+        # extracts file name from path
+        fileName = FileReader.getFileName(name)
+        # get file lines
+        fileLines = FileReader.readFile(name)
+        templateConverter = TemplateConverter(fileLines, fileName)
+        # get converted lines
+        convertedLines = templateConverter.getFileLines()
+        # add lines that are inconvertible to the list
+        manualReplacments += map(str, templateConverter.irreversibleDataList)
+        fileName = fileName + ".html"
+        # save jinja2 template
+        FileWriter.writeToFile(pathConverted + fileName, convertedLines)
+    # save info about inconvertible template
+    FileWriter.writeToFile(pathManual + "manualConversions.txt", manualReplacments)
+
+
 if __name__ == "__main__":
-    # for name in FileReader.getFileNames("/home/adelina/cern/DAS/src/templates/"):
-    name = "/home/adelina/PycharmProjects/testCheetah/quote/qoute.tmpl"
-    fileName = FileWriter.getFileName(name)
-    fileLines = FileReader.readFile(name)
-    lineNumbers = TemplateConverter(fileLines, fileName)
-    aaa = lineNumbers.getFileLines()
-    for conversions in lineNumbers.irreversibleDataList:
-        conversions.codeReplacment=lineNumbers.getFileLines()[conversions.lineStart:conversions.lineEnd+1]
-    print(str(lineNumbers.irreversibleDataList[0]))
-    # fileName=fileName+".html"
-    # FileWriter.writeToFile("/home/adelina/cern/convertedTemplates/"+fileName, aaa)
+    parser = argparse.ArgumentParser(description='Converts cheetah .tmpl to jinja2')
+    parser.add_argument("-p", dest="path", required=True, action='store',
+                        help="Directory of .tmpl files that needs to be converted")
+    parser.add_argument("-pc", dest="pathConverted", required=True, action='store',
+                        help="Path where converted templates should be saved")
+    parser.add_argument("-pm", dest="pathManual", action='store', required=True,
+                        help="Path where information about failed conversions should be saved")
+    opts = parser.parse_args()
+    main(opts)
