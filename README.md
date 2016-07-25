@@ -75,7 +75,7 @@ Jinja2:
 <!-- sitedb.tmpl -->
 ```	
 	
-To convert cheetah templates to Jina2 need to run scrip TemplateConverter.py with parameters:
+To convert cheetah templates to Jina2 need to run script TemplateConverter.py with parameters:
 
 * -p PATH            Directory of .tmpl files that needs to be converted
 * -pc PATHCONVERTED  Path where converted templates should be saved
