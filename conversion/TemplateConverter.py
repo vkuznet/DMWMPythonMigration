@@ -55,7 +55,7 @@ class TemplateConverter(object):
                 # finds the #end
                 while (type.value[1] not in self.fileLines[lineEnd]):
                     lineEnd += 1
-                    if (lineEnd > lineNr + 20 or len(self.fileLines) < lineEnd):
+                    if (lineEnd > lineNr + 20 or len(self.fileLines) <= lineEnd):
                         print("Failed to find the end of block in file: " + self.filename + "of type: " + type.value[0])
             # adds info about lines to the list
             self.irreversibleDataList.append(
@@ -145,7 +145,7 @@ class TemplateConverter(object):
         lineNrEnd = lineNr
         while ("#end block" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
-            if (lineNrEnd > lineNr + 15 or len(self.fileLines) < lineNrEnd):
+            if (len(self.fileLines) <= lineNrEnd):
                 irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.block,
                                                     self.fileLines[lineNr:lineNrEnd + 1])
                 self.irreversibleDataList.append(irreversibleData)
@@ -166,7 +166,7 @@ class TemplateConverter(object):
         lineNrEnd = lineNr
         while ("#end if" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
-            if (lineNrEnd > lineNr + 20 or len(self.fileLines) < lineNrEnd):
+            if (len(self.fileLines) <= lineNrEnd):
                 irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.ifBlock,
                                                     self.fileLines[lineNr:lineNrEnd + 1])
                 self.irreversibleDataList.append(irreversibleData)
@@ -195,7 +195,7 @@ class TemplateConverter(object):
         while ("#end " not in self.fileLines[lineNrEnd]):
             deletableLines.append(lineNrEnd)
             lineNrEnd += 1
-            if (lineNrEnd < lineNr - 10):
+            if (lineNrEnd >= len(self.fileLines)):
                 irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.stop,
                                                     self.fileLines[lineNr:lineNrEnd + 1])
                 self.irreversibleDataList.append(irreversibleData)
@@ -216,6 +216,12 @@ class TemplateConverter(object):
         lineNrEnd = lineNr
         while ("#end for" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
+            if (lineNrEnd >= len(self.fileLines)):
+                irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.forLoop,
+                                                    self.fileLines[lineNr:lineNrEnd + 1])
+                self.irreversibleDataList.append(irreversibleData)
+                print("Failed to convert #for in " + self.filename)
+                return
         cleanText = self.cleanHTMLTags(lineNrEnd)
         cleanReplacment = cleanText.replace("#end for", "{% endfor %}")
         self.fileLines[lineNrEnd] = self.fileLines[lineNrEnd].replace(cleanText, cleanReplacment)
@@ -297,28 +303,38 @@ class TemplateConverter(object):
         if "*#" in self.fileLines[lineNr]:
             self.fileLines[lineNr] = self.fileLines[lineNr].replace("*#", "#}")
 
-    # Need to be called after all other placeholders were converted
     def convertPlaceHolders(self, lineNr):
-        # convert placeholder with multiple parameters
-        if re.search("\$\w*?[\)\]\[\w._\($]+,[ \w=,$]+\)+", self.fileLines[lineNr]):
-            changeableWords = re.findall("\$\w*?\([\)\]\[\w._\($]+,[ \w=,$]+\)+", self.fileLines[lineNr])
-            for word in set(changeableWords):
-                replace = lambda x: "{{" + x.replace("$", "") + "}}"
-                self.fileLines[lineNr] = self.fileLines[lineNr].replace(word, replace(word))
-        # add }} at the end of any placeholder
-        changeableWords = re.findall("\$\w*.+?\(.+\)+|\$\w*?[\)\]\[\w._\($]+", self.fileLines[lineNr])
-        for word in set(changeableWords):
-            self.fileLines[lineNr] = self.fileLines[lineNr].replace(word, word + "}}")
-        # add {{ at the start of placeholder if it's not in the method call
-        changeableWords = re.findall('.\$\w+', self.fileLines[lineNr])
-        for word in changeableWords:
-            replace = lambda x: x.replace("$", "{{")[1:] if x[:1] != "(" and x[:1] != ":" else x.replace("$", "")[1:]
-            self.fileLines[lineNr] = self.fileLines[lineNr].replace(word[1:], replace(word))
-        # in case if any is missed
-        changeableWords = re.findall('\$\w+', self.fileLines[lineNr])
-        for word in changeableWords:
-            replace = lambda x: x.replace("$", "{{")
-            self.fileLines[lineNr] = self.fileLines[lineNr].replace(word, replace(word))
+        """
+        Converts cheetah placeholders to jinja2
+
+        :param lineNr: number of line
+        """
+        placeholders = re.findall("\$\w+.", self.fileLines[lineNr])
+        fullPlaceholders = self.getFullPlacehoder(lineNr, placeholders)
+        replace = lambda x: "{{" + x.replace("$", "")[:-1] + "}}" + \
+                            x[-1:] if not re.search('\w$', x) else "{{" + x.replace( "$", "") + "}}"
+        for placeholder in fullPlaceholders:
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace(placeholder, replace(placeholder))
+
+    def getFullPlacehoder(self, lineNr, words):
+        """
+        Recursively checks where placeholder ends and returns it
+
+        :param lineNr: number of line
+        :param words: list of partial placeholders
+        :return: returns list of full placeholder
+        """
+        for word in words:
+            if word[-1:] == "(":
+                words = re.findall(re.escape(word) + ".+?\)+.", self.fileLines[lineNr])
+                return self.getFullPlacehoder(lineNr, words)
+            if word[-1:] == "[":
+                words = re.findall(re.escape(word) + ".+?\]+.", self.fileLines[lineNr])
+                return self.getFullPlacehoder(lineNr, words)
+            if word[-1:] == ".":
+                words = re.findall(re.escape(word) + "\w+.", self.fileLines[lineNr])
+                return self.getFullPlacehoder(lineNr, words)
+        return words
 
     def convertEcho(self, lineNr):
         """
@@ -377,7 +393,7 @@ class TemplateConverter(object):
         lineNrStart = lineNr
         while ("{% endfor" not in self.fileLines[lineNrEnd]):
             lineNrEnd += 1
-            if (lineNrEnd > lineNr + 10):
+            if (lineNrEnd >= len(self.fileLines)):
                 irreversibleData = IrreversibleData(self.filename, lineNr, lineNrEnd, DataTypes.slurp,
                                                     self.fileLines[lineNr:lineNrEnd + 1])
                 self.irreversibleDataList.append(irreversibleData)
@@ -386,7 +402,7 @@ class TemplateConverter(object):
 
         while ("{% for " not in self.fileLines[lineNrStart]):
             lineNrStart -= 1
-            if (lineNrEnd < lineNr - 10):
+            if (lineNrEnd < 0):
                 irreversibleData = IrreversibleData(self.filename, lineNrEnd, lineNr, DataTypes.slurp,
                                                     self.fileLines[lineNr:lineNrEnd + 1])
                 self.irreversibleDataList.append(irreversibleData)
@@ -429,6 +445,7 @@ def main(opts):
     pathManual = slashIt(opts.pathManual)
 
     manualReplacments = []
+    fileNames = []
     for name in FileReader.getFileNames(path):
         # extracts file name from path
         fileName = FileReader.getFileName(name)
@@ -439,10 +456,14 @@ def main(opts):
         convertedLines = templateConverter.getFileLines()
         # add lines that are inconvertible to the list
         manualReplacments += map(str, templateConverter.irreversibleDataList)
+        fileNames += [x.fileName for x in templateConverter.irreversibleDataList]
         fileName = fileName + ".html"
         # save jinja2 template
         FileWriter.writeToFile(pathConverted + fileName, convertedLines)
     # save info about inconvertible template
+    print(str(len(list(set(
+        fileNames)))) + " file(s) need manual conversion. More information can be found in:\n" +
+          pathManual + "manualConversions.txt")
     FileWriter.writeToFile(pathManual + "manualConversions.txt", manualReplacments)
 
 

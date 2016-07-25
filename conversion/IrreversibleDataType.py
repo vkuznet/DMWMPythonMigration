@@ -41,3 +41,4 @@ class DataTypes(Enum):
     block = ["#block"]
     ifBlock = ["#if"]
     stop = ["#stop"]
+    forLoop = ["#for"]
