@@ -82,7 +82,7 @@ class TemplateConverter(object):
                 self.convertContinue(number)
             if "#pass" in self.fileLines[number]:
                 self.convertPass(number)
-            if any(x in self.fileLines[number] for x in ["#*", "*#"]):
+            if any(x in self.fileLines[number] for x in ["#*", "*#","##"]):
                 self.convertComment(number)
             if "#silent" in self.fileLines[number]:
                 self.convertSilent(number)
@@ -130,7 +130,7 @@ class TemplateConverter(object):
         :return: string without any new lines
         """
         if (text.endswith("\n")):
-            text = text.replace("\n", "")
+            text = text[:-2]
         return text
 
     def convertBlock(self, lineNr):
@@ -262,7 +262,7 @@ class TemplateConverter(object):
 
         :param lineNr: number of line
         """
-        self.fileLines[lineNr] = self.fileLines[lineNr].replace("#break", "{% break %}")
+        self.fileLines[lineNr] = self.fileLines[lineNr].replace("#break", "{%- break %}")
 
     def convertContinue(self, lineNr):
         """
@@ -270,7 +270,7 @@ class TemplateConverter(object):
 
         :param lineNr: number of line
         """
-        self.fileLines[lineNr] = self.fileLines[lineNr].replace("#continue", "{% continue %}")
+        self.fileLines[lineNr] = self.fileLines[lineNr].replace("#continue", "{%- continue %}")
 
     def convertPass(self, lineNr):
         """
@@ -288,7 +288,7 @@ class TemplateConverter(object):
         """
         cleanText = self.cleanHTMLTags(lineNr)
         cleanText = self.removeNewLine(cleanText)
-        cleanReplacment = cleanText.replace("#set", "{% set").replace("$", "") + " %}"
+        cleanReplacment = cleanText.replace("#set", "{%- set").replace("$", "") + " %}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(cleanText, cleanReplacment)
 
     def convertComment(self, lineNr):
@@ -297,9 +297,10 @@ class TemplateConverter(object):
 
         :param lineNr: number of lines
         """
-        # single line comments "## comment" are supported
+        if "##" in self.fileLines[lineNr]:
+            self.fileLines[lineNr] = self.removeNewLine(self.fileLines[lineNr].replace("##", "{#-"))+"#}\n"
         if "#*" in self.fileLines[lineNr]:
-            self.fileLines[lineNr] = self.fileLines[lineNr].replace("#*", "{#")
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace("#*", "{#-")
         if "*#" in self.fileLines[lineNr]:
             self.fileLines[lineNr] = self.fileLines[lineNr].replace("*#", "#}")
 
@@ -358,8 +359,8 @@ class TemplateConverter(object):
         cleanText = self.cleanHTMLTags(lineNr)
         changeablePart = re.search("#silent.+#|#silent.+", cleanText).group(0)
         replace = changeablePart.replace("$", "").replace("#silent", '').replace("#", '', 1)
-        # adding jijnja filter to replace output with empty string
-        replace = "{{" + replace + "|replace(" + replace + ",'')}}"
+        # output should always be empty
+        replace = "{{- \"\" if " + replace + "}}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace)
 
     def convertOneLineIf(self, lineNr):
@@ -371,7 +372,7 @@ class TemplateConverter(object):
         cleanText = self.cleanHTMLTags(lineNr)
         changeablePart = re.search("#if.+then.+else.+#|#if.+then.+else.+", cleanText).group(0)
         changeableParts = changeablePart.split(" then ")
-        changeableParts[0] = changeableParts[0].replace("#if", "{% if").replace("$", "") + "%}"
+        changeableParts[0] = changeableParts[0].replace("#if", "{%- if").replace("$", "") + "%}"
         changeableParts[1] = changeableParts[1].replace(" else ", "{% else %}")
         if changeablePart.endswith("#"):
             changeableParts[1] = changeableParts[1][:-1] + "{% endif %}"
