@@ -22,13 +22,4 @@ class IrreversibleData(object):
             raise ValueError("Replacment should be a list")
         self._codeReplacment = replacment
 
-    def __str__(self):
-        """
-        Formats information about failed conversions to string
 
-        :return: formated string
-        """
-        return "Could not fully convert lines: {0} - {1} in {2}." \
-               " {3} expresion should be converted manualy.\nCode:\n{4}" \
-               "\nChanged to:\n{5}\n{6}".format(self.lineStart + 1, self.lineEnd + 1, self.fileName, self.type.value[0],
-                                                "".join(self.oldValue), "".join(self.codeReplacment), "-" * 100)

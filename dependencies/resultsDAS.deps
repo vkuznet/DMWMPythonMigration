@@ -1,0 +1,31 @@
+Modules not supported in python3: 
+
+Carbon --- Not supported. Can we remove it? Only used in DAS/src/python/plistlib. Cuuld use: https://docs.python.org/3/library/plistlib.html
+Cheetah --- Convert it to jinja2
+HTMLParser --- Renamed to html.parser. The 2to3 tool will automatically adapt imports
+Plist ---  Not supported. Can we remove it? Only used in DAS/src/python/plistlib. COuld use: https://docs.python.org/3/library/plistlib.html
+Queue --- Renamed to queue. The 2to3 tool will automatically adapt imports.
+tests --- used by pycurl tests. No need to port
+xmlrpclib --- Renamed to xmlrpc.client in Python 3. The 2to3 tool will automatically adapt imports
+yajl - Not supported. Port to https://github.com/rtyler/py-yajl/ or original: https://github.com/pykler/yajl-py:  if using python3, yajl-py expects bytes and not strings
+yaml --- PyYAML - supported
+--------------------------------------------------
+Modules not found: 
+
+antlr3 --- not supported. Port to: https://github.com/antlr/antlr3/tree/master/runtime/Python3
+antrl --- we wrote it. uses antlr3 as dep.
+cjson --- not supported. Only usded in /DAS/test/jsonwrapper_t.py (and init). !!!!!!!!!!
+cookielib --- renamed to http.cookiejar in Python 3. The 2to3 tool will automatically adapt imports
+cPickle --- Not supported. Just use normal pickle
+cStringIO --- cStringIO is removed. Use io.StringIO
+get_schema --- we wrote it.
+gridfs --- supported. Might change datatypes a bit
+httplib ---  renamed to http.client in Python 3. The 2to3 tool will automatically adapt imports 
+jsonpath_rw --- supported
+md5 ---  Use the hashlib.md5 module instead
+memcache --- used in OLD only
+Stemmer  ---- https://pypi.python.org/pypi/PyStemmer supported
+StringIO --- StringIO is removed. Use io.StringIO
+thread ---  renamed to _thread in Python 3. The 2to3 tool will automatically adapt imports 
+urllib2 --- renamed to urllib.request and urllib.error. The 2to3 tool will automatically adapt imports 
+urlparse --- renamed to urllib.parse in Python 3. The 2to3 tool will automatically adapt imports

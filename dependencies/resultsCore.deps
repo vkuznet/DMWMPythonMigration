@@ -1,0 +1,50 @@
+Modules not supported in python3: 
+Cheetah --- Convert it to jinja2
+commands ---  Use the subprocess module instead
+Configuration ---  renamed to configparser in Python 3. The 2to3 tool will automatically adapt imports
+couchapp --- Not supported. Should be supported soon. http://stackoverflow.com/questions/5849316/is-there-a-simpler-couchapp-than-couchapp
+mechanize --- Not supported. Use: https://github.com/jmcarp/robobrowser or https://github.com/hickford/MechanicalSoup
+Queue --- Renamed to queue. The 2to3 tool will automatically adapt imports.
+RestClient --- Custom lib. https://github.com/giffels/RestClient
+zmq --- supported https://github.com/zeromq/pyzmq/blob/master/README.md
+--------------------------------------------------
+Modules not found: 
+apmon --- custom lib. Might need to rewrite it after conversion?
+buildslaveconfig --- imports configs. Custom stuff
+classad --- ???? python-condor stuff. http://research.cs.wisc.edu/htcondor/classad/ /WMCore/BossAir/Plugins/PyCondorPlugin.py
+Controllers --- ????? only used in WMCore/src/python/WMCore/WebTools/Masthead.py
+cPickle --- Not supported. Just use normal pickle
+cStringIO --- cStringIO is removed. Use io.StringIO
+dbs ---  Custom lib. CMS Dataset Bookkeeping Service
+dbs3Client -- Custom lib. 
+DBSAPI --- custom lib.
+dbsException --- custom lib. dmwm/DBS – dbsException.py 
+dcap --- not supported. https://github.com/alexanderwaldin/dcap
+FWCore --- custom. https://github.com/cms-sw/cmssw/tree/CMSSW_8_1_X/FWCore
+get_dbs --- custom. Called using __all__
+get_remote_queue --- custom. Called using __all__
+glite_wmsui_LbWrapper --- custom. 'glite_wmsui_LbWrapper' exists on both gLite 3.1 and gLite 3.2
+hotshot --- The "hotshot" module disappeared in Python3.x. It seems it is deprecated although this is not mentioned in the documentation.
+htcondor --- supported. (Is connected with classad)
+httplib --- renamed to http.client in Python 3. The 2to3 tool will automatically adapt imports
+Integration_t --- custom
+IOMC --- custom
+OpenSSL --- supported https://pypi.python.org/pypi/pyOpenSSL
+popen2 --- This module is obsolete. Use the subprocess module.
+PSetTweaks --- custom
+queueConfigFromConfigObject --- custom. From __all__
+queueFromConfig --- --- custom. From __all__
+ReqMgr --- custom
+ReqMgrSecrets --- custom
+StageOut --- custom
+StringIO --- StringIO is removed. Use io.StringIO
+thread ---  renamed to _thread in Python 3. The 2to3 tool will automatically adapt imports 
+urllib2 --- renamed to urllib.request and urllib.error. The 2to3 tool will automatically adapt imports 
+urlparse --- renamed to urllib.parse in Python 3. The 2to3 tool will automatically adapt imports
+WMComponent --- custom
+WMCore --- custom
+WMCore_t --- custom 
+WMQuality --- custom
+WMSandbox --- custom
+wmsui_api --- custom. 'wmsui_api' exists only on gLite 3.2 
+WMTaskSpace --- custom
