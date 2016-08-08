@@ -20,3 +20,9 @@ Week3:
 - Read about regex(recursive, conditionals etc.) - tested them out
 - Created IrrevertableData to store info about cheetah expresions that can't be converted
 - Fixed some minor bugs(search for expr. end till the end of file, continue and etc.)
+
+Week4:
+- Reconfigured VM. Fixed the probels I had before. It's up and running.
+- Added more documentation for template converter.
+- Created scrip that analyzes any python project and returs unsupported modules/libs.
+- Some bug fixes (changed how comments are handled, new line removal and etc.).

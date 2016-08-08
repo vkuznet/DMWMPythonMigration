@@ -130,7 +130,7 @@ class TemplateConverter(object):
         :return: string without any new lines
         """
         if (text.endswith("\n")):
-            text = text[:-2]
+            text = text[:-1]
         return text
 
     def convertBlock(self, lineNr):
@@ -452,20 +452,20 @@ def main(opts):
         fileName = FileReader.getFileName(name)
         # get file lines
         fileLines = FileReader.readFile(name)
-        templateConverter = TemplateConverter(fileLines, fileName)
+        templateConverter = TemplateConverter(fileLines, name)
         # get converted lines
         convertedLines = templateConverter.getFileLines()
         # add lines that are inconvertible to the list
-        manualReplacments += map(str, templateConverter.irreversibleDataList)
+        manualReplacments += templateConverter.irreversibleDataList
         fileNames += [x.fileName for x in templateConverter.irreversibleDataList]
-        fileName = fileName + ".html"
+        fileName = fileName + ".tmpl"
         # save jinja2 template
         FileWriter.writeToFile(pathConverted + fileName, convertedLines)
     # save info about inconvertible template
     print(str(len(list(set(
         fileNames)))) + " file(s) need manual conversion. More information can be found in:\n" +
           pathManual + "manualConversions.txt")
-    FileWriter.writeToFile(pathManual + "manualConversions.txt", manualReplacments)
+    FileWriter.writeToFile(pathManual + "manualConversions.txt", FileWriter.convertToString(manualReplacments))
 
 
 if __name__ == "__main__":
