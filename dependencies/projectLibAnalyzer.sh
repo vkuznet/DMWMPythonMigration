@@ -22,8 +22,6 @@ fi
 
 r=$(pwd)/"raw"$d
 d=$(pwd)/$d
-#r="/home/adelina/cern/analysis/raw"$d
-#d="/home/adelina/cern/analysis/"$d
 
 echo "Searching for modules in project: " $p
 sfood-imports $p > $r
