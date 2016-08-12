@@ -82,7 +82,7 @@ class TemplateConverter(object):
                 self.convertContinue(number)
             if "#pass" in self.fileLines[number]:
                 self.convertPass(number)
-            if any(x in self.fileLines[number] for x in ["#*", "*#","##"]):
+            if any(x in self.fileLines[number] for x in ["#*", "*#", "##"]):
                 self.convertComment(number)
             if "#silent" in self.fileLines[number]:
                 self.convertSilent(number)
@@ -298,7 +298,7 @@ class TemplateConverter(object):
         :param lineNr: number of lines
         """
         if "##" in self.fileLines[lineNr]:
-            self.fileLines[lineNr] = self.removeNewLine(self.fileLines[lineNr].replace("##", "{#-"))+"#}\n"
+            self.fileLines[lineNr] = self.removeNewLine(self.fileLines[lineNr].replace("##", "{#-")) + "#}\n"
         if "#*" in self.fileLines[lineNr]:
             self.fileLines[lineNr] = self.fileLines[lineNr].replace("#*", "{#-")
         if "*#" in self.fileLines[lineNr]:
@@ -313,7 +313,7 @@ class TemplateConverter(object):
         placeholders = re.findall("\$\w+.", self.fileLines[lineNr])
         fullPlaceholders = self.getFullPlacehoder(lineNr, placeholders)
         replace = lambda x: "{{" + x.replace("$", "")[:-1] + "}}" + \
-                            x[-1:] if not re.search('\w$', x) else "{{" + x.replace( "$", "") + "}}"
+                            x[-1:] if not re.search('\w$', x) else "{{" + x.replace("$", "") + "}}"
         for placeholder in fullPlaceholders:
             self.fileLines[lineNr] = self.fileLines[lineNr].replace(placeholder, replace(placeholder))
 

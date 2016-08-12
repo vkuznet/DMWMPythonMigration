@@ -1,7 +1,6 @@
 import argparse
 import importlib
-
-from caniusepython3 import pypi
+import requests
 
 
 def isModuleInstalled(moduleName):
@@ -15,6 +14,14 @@ def isModuleInstalled(moduleName):
     found = spam_spec is not None
     return found
 
+def supports_py3(project_name):
+    """Check with PyPI if a project supports Python 3."""
+    request = requests.get("https://pypi.org/pypi/{}/json".format(project_name))
+    if request.status_code >= 400:
+        return False
+    response = request.json()
+    return any(c.startswith("Programming Language :: Python :: 3")
+               for c in response["info"]["classifiers"])
 
 def main(depFile):
     """
@@ -25,28 +32,17 @@ def main(depFile):
     """
     with open(depFile) as f:
         fileLines = f.readlines()
-
-    # get list of py3 supported libs
-    py3_projects = pypi.all_py3_projects()
-    # get list of available libs
-    all = pypi.all_projects()
     # remove new line symbols
     fileLines = filter(None, list(map(lambda x: x.strip(), fileLines)))
     notSupportedList = []
-    notFoundList = []
     for line in fileLines:
         # check if module is from 3rd party or in standard lib
-        if line.lower() in all or isModuleInstalled(line):
-            # check if it is not supported
-            if line.lower() not in py3_projects and not isModuleInstalled(line):
-                notSupportedList.append(line)
-        else:
-            notFoundList.append(line)
+        if not supports_py3(line.lower()) and not isModuleInstalled(line):
+            notSupportedList.append(line)
 
     print("Modules not supported in python3: \n" + "\n".join(notSupportedList)+"\nFor more info go to: "+depFile)
     with open(depFile, mode='w+', encoding='utf-8') as myfile:
-        myfile.write("Modules not supported in python3: \n" + "\n".join(notSupportedList) + "\n" + "-" * 50 +
-                     "\nModules not found: \n" + "\n".join(notFoundList))
+        myfile.write("Modules not supported in python3: \n" + "\n".join(notSupportedList))
 
 
 if __name__ == "__main__":

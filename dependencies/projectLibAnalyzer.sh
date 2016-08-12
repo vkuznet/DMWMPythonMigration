@@ -20,11 +20,14 @@ if [ -z "${p}" ] || [ -z "${d}" ]; then
     usage
 fi
 
+r=$(pwd)/"raw"$d
 d=$(pwd)/$d
+#r="/home/adelina/cern/analysis/raw"$d
+#d="/home/adelina/cern/analysis/"$d
 
 echo "Searching for modules in project: " $p
-sfood-imports $p > raw.deps
-echo "Raw project modules are saved in: " $(pwd)/"raw.deps"
-cat raw.deps | grep -v lib/python2.7 | cut -d':' -f3 |cut -d'.' -f1| sort -u > $d
+sfood-imports $p > $r
+echo "Raw project modules are saved in: " $r
+cat $r | grep -v lib/python2.7 | cut -d':' -f3 |cut -d'.' -f1| sort -u > $d
 echo "Analyzing modules..."
 python3 projectLibAnalyzer.py -p $d

@@ -24,8 +24,7 @@ FWCore --- custom. https://github.com/cms-sw/cmssw/tree/CMSSW_8_1_X/FWCore
 get_dbs --- custom. Called using __all__
 get_remote_queue --- custom. Called using __all__
 glite_wmsui_LbWrapper --- custom. 'glite_wmsui_LbWrapper' exists on both gLite 3.1 and gLite 3.2
-hotshot --- The "hotshot" module disappeared in Python3.x. It seems it is deprecated although this is not mentioned in the documentation.
-htcondor --- supported. (Is connected with classad)
+`htcondor --- supported. (Is connected with classad)
 httplib --- renamed to http.client in Python 3. The 2to3 tool will automatically adapt imports
 Integration_t --- custom
 IOMC --- custom
