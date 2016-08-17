@@ -21,5 +21,3 @@ class IrreversibleData(object):
         if not isinstance(replacment, list):
             raise ValueError("Replacment should be a list")
         self._codeReplacment = replacment
-
-
