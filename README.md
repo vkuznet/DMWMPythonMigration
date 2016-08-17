@@ -29,9 +29,10 @@ For more info run:
 
 python3 dependencyWriter.py -h
 
-results.txt - list of dependencies with annotations if they are supported in python3
-python3AvailableLibs.txt - available python3 libraries
-tree.txt- dependencies tree graph
+In "dependencies from spec" folder:  
+* results.txt - list of dependencies with annotations if they are supported in python3
+* python3AvailableLibs.txt - available python3 libraries
+* tree.txt- dependencies tree graph
 
 Example:
 ```

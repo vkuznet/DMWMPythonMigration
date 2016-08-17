@@ -26,3 +26,12 @@ Week4:
 - Added more documentation for template converter.
 - Created scrip that analyzes any python project and returs unsupported modules/libs.
 - Some bug fixes (changed how comments are handled, new line removal and etc.).
+
+Week5-6:
+- Fixed manualResults output for Converter.
+- Updated scipt that analyzes any python project (Uses requests now)
+- Analyzed all projects in DMWM
+- Made list of python modules that need to be ported
+- Read https://twiki.cern.ch/twiki/bin/viewauth/CMS/DMWM
+- Researched possible libraries for migration
+- Wrote some small scripts for reserch (https://github.com/SaltumDis/conversions)
