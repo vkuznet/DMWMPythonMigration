@@ -420,7 +420,7 @@ class TemplateConverter(object):
         :param lineNr:
         """
         changeablePart = re.search("\${.*}", self.fileLines[lineNr]).group(0)
-        replace = lambda x: x.replace("${", "{{") + "}"
+        replace = lambda x: x.replace("${", "{{") + "}}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace(changeablePart))
 
     def convertImport(self, lineNr):
