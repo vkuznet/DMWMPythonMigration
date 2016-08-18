@@ -8,7 +8,11 @@ Description:
 The WMAgent and Tier0 are responsible for submitting and managing tens of thousands or processing jobs on the Worldwide LHC Computing Grid. DAS and DBS are responsible for tracking data and meta-data of PB of files. This code is in production based on python 2.7. The candidate will work with the development teams to prepare this code for python 3.x, beginning with an audit of the suitability of the external software used and identifying replacements where needed. Automated tools will also be employed to help with this porting.
 
 
-Everything is written in python 3.5
+Everything is written in python 3.5  
+
+###### List of dependencies in DMWMP project:
+[Pythonmigrationfrom2to3.pdf](https://github.com/SaltumDis/DMWMPythonMigration/blob/master/Pythonmigrationfrom2to3.pdf) or [Pythonmigrationfrom2to3 from drive](https://docs.google.com/document/d/1yq3HRtJntxESigKYf84Ap8XrE2AifYwl8WhGOagaKbo/edit?usp=sharing)
+
 
 ## Dependencies:
 ###### dependencyWriter.py
