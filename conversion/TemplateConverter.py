@@ -419,9 +419,10 @@ class TemplateConverter(object):
         Has to be called before convertPlaceHolder
         :param lineNr:
         """
-        changeablePart = re.search("\${.*}", self.fileLines[lineNr]).group(0)
+        changeableParts = re.findall("\${.*?}", self.fileLines[lineNr])
         replace = lambda x: x.replace("${", "{{") + "}"
-        self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace(changeablePart))
+        for changeablePart in changeableParts:
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace(changeablePart))
 
     def convertImport(self, lineNr):
         """
