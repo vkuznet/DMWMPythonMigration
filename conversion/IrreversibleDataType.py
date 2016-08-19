@@ -35,6 +35,8 @@ class DataTypes(Enum):
     """
      Enumerator for cheetah expresion types that might be problematic
      """
+    enumerate = ["enumerate("]
+    type = ["type("]
     echo = ["#echo"]
     importFrom = ["#import, #from"]
     slurp = ["#slurp"]
@@ -64,5 +66,7 @@ explanations = {
     DataTypes.ifBlock: "Could not find end of if statement\n",
     IrreversibleType.whileLoop: "Could not find end of the loop\n",
     IrreversibleType.raiseException: "Remove/replace exception raiser\n",
+    DataTypes.enumerate: "Need to add enumerate to environment to use as a normal placeholder\n",
+    DataTypes.type: "Need to add type to environment to use as a normal placeholder\n",
 
 }

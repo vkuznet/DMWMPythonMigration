@@ -68,6 +68,10 @@ class TemplateConverter(object):
         :param lineNumbers: list of numbers that represent convertable lines
         """
         for number in lineNumbers:
+            if any(x in self.fileLines[number] for x in ["\\#", "\\$"]):
+                self.fileLines[number]=self.fileLines[number].replace("\\#","#")
+                self.fileLines[number]=self.fileLines[number].replace("\\$","$")
+                continue
             if "#block" in self.fileLines[number]:
                 self.convertBlock(number)
             if "#set" in self.fileLines[number]:
@@ -100,6 +104,14 @@ class TemplateConverter(object):
                 self.convertPlaceHolders(number)
             if "#slurp" in self.fileLines[number]:
                 self.convertSlurp(number)
+            if "len(" in self.fileLines[number]:
+                self.convertLen(number)
+            if "enumerate(" in self.fileLines[number]:
+                self.convertEumerator(number)
+            if "range(" in self.fileLines[number]:
+                self.convertRange(number)
+            if "type(" in self.fileLines[number]:
+                self.convertType(number)
             if any(x in self.fileLines[number] for x in ["#import", "#from"]):
                 self.convertImport(number)
 
@@ -435,6 +447,47 @@ class TemplateConverter(object):
         # clean the line
         self.fileLines[lineNr] = ""
 
+    def convertLen(self, lineNr):
+        """
+        Converts builtin len to jinja2 filter count
+
+        :param lineNr: number of line
+        """
+        changeableParts = re.findall(".len\(.*?\)", self.fileLines[lineNr])
+        replace = lambda x: x.replace("$len(", "")[:-1] + "| count" if x[1:]=="$" \
+            else x.replace("len(", "")[:-1] + "| count"
+        for changeablePart in changeableParts:
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace(changeablePart))
+
+    def convertRange(self, lineNr):
+        """
+        Removes "$" from range function
+
+        :param lineNr: number of line
+        """
+        self.fileLines[lineNr] = self.fileLines[lineNr].replace("$range(", "range(")
+
+    def convertEumerator(self, lineNr):
+        """
+        Removes "$" from enumerator and adds info about it to irreversibleDataList
+
+        :param lineNr: number of line
+        """
+        self.fileLines[lineNr] = self.fileLines[lineNr].replace("$enumerate(", "enumerate(")
+        irreversibleData = IrreversibleData(self.filename, lineNr, lineNr, DataTypes.enumerate,
+                                            self.fileLines[lineNr:lineNr + 1])
+        self.irreversibleDataList.append(irreversibleData)
+
+    def convertType(self, lineNr):
+        """
+        Removes "$" from type and adds info about it to irreversibleDataList
+
+        :param lineNr: number of line
+        """
+        self.fileLines[lineNr] = self.fileLines[lineNr].replace("$type(", "type(")
+        irreversibleData = IrreversibleData(self.filename, lineNr, lineNr, DataTypes.type,
+                                            self.fileLines[lineNr:lineNr + 1])
+        self.irreversibleDataList.append(irreversibleData)
 
 def main(opts):
     "Main function"
