@@ -330,11 +330,11 @@ class TemplateConverter(object):
         for placeholder in placeholders:
             fullPlaceholders+=self.getFullPlacehoder(lineNr, [placeholder])
         replace = lambda x: "{{" + x.replace("$", "")[:-1] + "}}" + \
-                            x[-1:] if not re.search('\w$|\)$|\]$', x) \
+                            x[-1:] if self.balanced(x[:-1])\
             else "{{" + x.replace("$", "") + "}}"
         while fullPlaceholders:
             placeholder=fullPlaceholders.pop()
-            if any(placeholder in s for s in fullPlaceholders):
+            if any(placeholder in x for x in fullPlaceholders):
                 continue
             self.fileLines[lineNr] = self.fileLines[lineNr].replace(placeholder, replace(placeholder))
 
@@ -359,6 +359,27 @@ class TemplateConverter(object):
                 else:
                     words.append(word)
         return words
+
+
+    def balanced(self,astr):
+        """
+        Checks if brackets are correct
+
+        :param astr: string
+        :return: if brackets are balanced
+        """
+        iparens = iter('()[]')
+        parens = dict(zip(iparens, iparens))
+        closing = parens.values()
+        stack = []
+        for c in astr:
+            d = parens.get(c, None)
+            if d:
+                stack.append(d)
+            elif c in closing:
+                if not stack or c != stack.pop():
+                    return False
+        return not stack
 
     def convertEcho(self, lineNr):
         """

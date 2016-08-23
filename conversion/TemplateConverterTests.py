@@ -35,6 +35,11 @@ class TestConverter(unittest.TestCase):
         convertedLines = converter.getFileLines()
         self.assertEqual("{{quote(jsoncode[1])}} aa {{jsoncode[1]}}. {{jsoncode_a(quote(la))}}", convertedLines[0])
 
+    def test_multiplePlaceHolders5(self):
+        lines = ["($from_res) aa"]
+        converter = TemplateConverter(lines, "test_notPlaceholder")
+        convertedLines = converter.getFileLines()
+        self.assertEqual("({{from_res}}) aa", convertedLines[0])
 
     def test_placeholderFuncion(self):
         lines = ["$qoute($stuff.morestuff(anmore()))\n"]
@@ -47,7 +52,12 @@ class TestConverter(unittest.TestCase):
         converter = TemplateConverter(lines, "test_placeholderFuncion")
         convertedLines = converter.getFileLines()
         self.assertEqual("<li>{{quote(key)}}: {{quote(val)}}</li>", convertedLines[0])
-
+    def test_placeholderFuncion2(self):
+        lines = ["< a href = \"javascript:Transition(-$width)\" style = \"background-color:#fff\" >"]
+        converter = TemplateConverter(lines, "test_placeholderFuncion")
+        convertedLines = converter.getFileLines()
+        self.assertEqual("< a href = \"javascript:Transition(-{{width}})\" style = \"background-color:#fff\" >",
+                         convertedLines[0])
 
     def test_set(self):
         lines = ["#set timestamp = $time.strftime(\"%a, %d %b %Y %H:%M:%S GMT\", $time.gmtime())"]
