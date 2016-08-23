@@ -16,6 +16,7 @@ class TemplateConverter(object):
     nrOfPythonConversions = 0
 
     def __init__(self, fileLines, fileName):
+        self.lala = []
         self.irreversibleDataList = []
         self.fileLines = fileLines
         self.filename = fileName
@@ -69,8 +70,8 @@ class TemplateConverter(object):
         """
         for number in lineNumbers:
             if any(x in self.fileLines[number] for x in ["\\#", "\\$"]):
-                self.fileLines[number]=self.fileLines[number].replace("\\#","#")
-                self.fileLines[number]=self.fileLines[number].replace("\\$","$")
+                self.fileLines[number] = self.fileLines[number].replace("\\#", "#")
+                self.fileLines[number] = self.fileLines[number].replace("\\$", "$")
                 continue
             if "#block" in self.fileLines[number]:
                 self.convertBlock(number)
@@ -106,6 +107,8 @@ class TemplateConverter(object):
                 self.convertSlurp(number)
             if "len(" in self.fileLines[number]:
                 self.convertLen(number)
+            if "str(" in self.fileLines[number]:
+                self.convertStr(number)
             if "enumerate(" in self.fileLines[number]:
                 self.convertEumerator(number)
             if "range(" in self.fileLines[number]:
@@ -164,7 +167,7 @@ class TemplateConverter(object):
                 print("Failed to convert block in " + self.filename)
                 return
         changeableWords = re.search("#end block( \w+)?", self.fileLines[lineNrEnd])
-        replacment = "{% endblock %}"
+        replacment = "{%- endblock -%}"
         self.fileLines[lineNrEnd] = self.fileLines[lineNrEnd].replace(changeableWords.group(0), replacment)
 
     def convertIfBlock(self, lineNr):
@@ -173,7 +176,7 @@ class TemplateConverter(object):
         :param lineNr: number of line
         """
         cleanText = self.removeNewLine(self.fileLines[lineNr])
-        cleanReplacment = cleanText.replace("#if", "{% if").replace("$", "") + " %}"
+        cleanReplacment = cleanText.replace("#if", "{% if").replace("$", "") + " -%}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(cleanText, cleanReplacment)
         lineNrEnd = lineNr
         while ("#end if" not in self.fileLines[lineNrEnd]):
@@ -193,7 +196,7 @@ class TemplateConverter(object):
             if "#else" in self.fileLines[lineNrEnd]:
                 self.convertElseInIfBlock(lineNrEnd)
         cleanText = self.cleanHTMLTags(lineNrEnd)
-        cleanReplacment = cleanText.replace("#end if", "{% endif %}")
+        cleanReplacment = cleanText.replace("#end if", "{%- endif -%}")
         self.fileLines[lineNrEnd] = self.fileLines[lineNrEnd].replace(cleanText, cleanReplacment)
 
     def convertStop(self, lineNr):
@@ -223,7 +226,7 @@ class TemplateConverter(object):
         :param lineNr: number of lines
         """
         cleanText = self.removeNewLine(self.fileLines[lineNr])
-        cleanReplacment = cleanText.replace("#for", "{% for").replace("$", "") + " %}"
+        cleanReplacment = cleanText.replace("#for", "{% for").replace("$", "") + " -%}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(cleanText, cleanReplacment)
         lineNrEnd = lineNr
         while ("#end for" not in self.fileLines[lineNrEnd]):
@@ -235,7 +238,7 @@ class TemplateConverter(object):
                 print("Failed to convert #for in " + self.filename)
                 return
         cleanText = self.cleanHTMLTags(lineNrEnd)
-        cleanReplacment = cleanText.replace("#end for", "{% endfor %}")
+        cleanReplacment = cleanText.replace("#end for", "{%- endfor -%}")
         self.fileLines[lineNrEnd] = self.fileLines[lineNrEnd].replace(cleanText, cleanReplacment)
 
     def convertElseIfInIfBlock(self, lineNr):
@@ -245,7 +248,7 @@ class TemplateConverter(object):
         :param lineNr: number of line
         """
         cleanText = self.removeNewLine(self.fileLines[lineNr])
-        cleanReplacment = cleanText.replace("#else if", "{% elif").replace("$", "") + " %}"
+        cleanReplacment = cleanText.replace("#else if", "{% elif").replace("$", "") + " -%}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(cleanText, cleanReplacment)
 
     def convertElifInIfBlock(self, lineNr):
@@ -265,7 +268,7 @@ class TemplateConverter(object):
         :param lineNr: line number
         """
         cleanText = self.removeNewLine(self.fileLines[lineNr])
-        cleanReplacment = cleanText.replace("#else", "{% else %}")
+        cleanReplacment = cleanText.replace("#else", "{% else -%}")
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(cleanText, cleanReplacment)
 
     def convertBreak(self, lineNr):
@@ -298,8 +301,7 @@ class TemplateConverter(object):
 
         :param lineNr: number of line
         """
-        cleanText = self.cleanHTMLTags(lineNr)
-        cleanText = self.removeNewLine(cleanText)
+        cleanText = self.removeNewLine(self.fileLines[lineNr])
         cleanReplacment = cleanText.replace("#set", "{%- set").replace("$", "") + " %}"
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(cleanText, cleanReplacment)
 
@@ -310,11 +312,12 @@ class TemplateConverter(object):
         :param lineNr: number of lines
         """
         if "##" in self.fileLines[lineNr]:
-            self.fileLines[lineNr] = self.removeNewLine(self.fileLines[lineNr].replace("##", "{#-")) + "#}\n"
+            self.fileLines[lineNr] = re.sub("##+", "{#-", self.fileLines[lineNr])
+            self.fileLines[lineNr] = self.removeNewLine(self.fileLines[lineNr]) + " #}\n"
         if "#*" in self.fileLines[lineNr]:
             self.fileLines[lineNr] = self.fileLines[lineNr].replace("#*", "{#-")
         if "*#" in self.fileLines[lineNr]:
-            self.fileLines[lineNr] = self.fileLines[lineNr].replace("*#", "#}")
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace("*#", " #}")
 
     def convertPlaceHolders(self, lineNr):
         """
@@ -323,10 +326,16 @@ class TemplateConverter(object):
         :param lineNr: number of line
         """
         placeholders = re.findall("\$\w+.", self.fileLines[lineNr])
-        fullPlaceholders = self.getFullPlacehoder(lineNr, placeholders)
+        fullPlaceholders=[]
+        for placeholder in placeholders:
+            fullPlaceholders+=self.getFullPlacehoder(lineNr, [placeholder])
         replace = lambda x: "{{" + x.replace("$", "")[:-1] + "}}" + \
-                            x[-1:] if not re.search('\w$', x) else "{{" + x.replace("$", "") + "}}"
-        for placeholder in fullPlaceholders:
+                            x[-1:] if not re.search('\w$|\)$|\]$', x) \
+            else "{{" + x.replace("$", "") + "}}"
+        while fullPlaceholders:
+            placeholder=fullPlaceholders.pop()
+            if any(placeholder in s for s in fullPlaceholders):
+                continue
             self.fileLines[lineNr] = self.fileLines[lineNr].replace(placeholder, replace(placeholder))
 
     def getFullPlacehoder(self, lineNr, words):
@@ -334,19 +343,21 @@ class TemplateConverter(object):
         Recursively checks where placeholder ends and returns it
 
         :param lineNr: number of line
-        :param words: list of partial placeholders
-        :return: returns list of full placeholder
+        :param words: partial placeholder
+        :return: placeholder
         """
         for word in words:
-            if word[-1:] == "(":
-                words = re.findall(re.escape(word) + ".+?\)+.", self.fileLines[lineNr])
-                return self.getFullPlacehoder(lineNr, words)
-            if word[-1:] == "[":
-                words = re.findall(re.escape(word) + ".+?\]+.", self.fileLines[lineNr])
+            if any(x == word[-1:] for x in ["(", "["]):
+                words = re.findall(re.escape(word) + ".+?[\)\]]+.", self.fileLines[lineNr])
+                if not words:
+                    words = re.findall(re.escape(word) + ".+?[\)\]]+", self.fileLines[lineNr])
                 return self.getFullPlacehoder(lineNr, words)
             if word[-1:] == ".":
                 words = re.findall(re.escape(word) + "\w+.", self.fileLines[lineNr])
-                return self.getFullPlacehoder(lineNr, words)
+                if words:
+                    return self.getFullPlacehoder(lineNr, words)
+                else:
+                    words.append(word)
         return words
 
     def convertEcho(self, lineNr):
@@ -384,12 +395,12 @@ class TemplateConverter(object):
         cleanText = self.cleanHTMLTags(lineNr)
         changeablePart = re.search("#if.+then.+else.+#|#if.+then.+else.+", cleanText).group(0)
         changeableParts = changeablePart.split(" then ")
-        changeableParts[0] = changeableParts[0].replace("#if", "{%- if").replace("$", "") + "%}"
+        changeableParts[0] = changeableParts[0].replace("#if", "{%- if").replace("$", "") + " -%}"
         changeableParts[1] = changeableParts[1].replace(" else ", "{% else %}")
         if changeablePart.endswith("#"):
             changeableParts[1] = changeableParts[1][:-1] + "{% endif %}"
         else:
-            changeableParts[1] = changeableParts[1] + "{% endif %}"
+            changeableParts[1] = changeableParts[1] + "{%- endif -%}"
         replacement = changeableParts[0] + changeableParts[1]
         self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replacement)
 
@@ -454,8 +465,20 @@ class TemplateConverter(object):
         :param lineNr: number of line
         """
         changeableParts = re.findall(".len\(.*?\)", self.fileLines[lineNr])
-        replace = lambda x: x.replace("$len(", "")[:-1] + "| count" if x[1:]=="$" \
+        replace = lambda x: x.replace("$len(", "")[:-1] + "| count" if x[1:] == "$" \
             else x.replace("len(", "")[:-1] + "| count"
+        for changeablePart in changeableParts:
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace(changeablePart))
+
+    def convertStr(self, lineNr):
+        """
+        Converts builtin str to jinja2 filter string
+
+        :param lineNr: number of line
+        """
+        changeableParts = re.findall(".str\(.*?\)", self.fileLines[lineNr])
+        replace = lambda x: x.replace("$str(", "")[:-1] + "| string" if x[1:] == "$" \
+            else x.replace("str(", "")[:-1] + "| string"
         for changeablePart in changeableParts:
             self.fileLines[lineNr] = self.fileLines[lineNr].replace(changeablePart, replace(changeablePart))
 
@@ -488,6 +511,7 @@ class TemplateConverter(object):
         irreversibleData = IrreversibleData(self.filename, lineNr, lineNr, DataTypes.type,
                                             self.fileLines[lineNr:lineNr + 1])
         self.irreversibleDataList.append(irreversibleData)
+
 
 def main(opts):
     "Main function"
