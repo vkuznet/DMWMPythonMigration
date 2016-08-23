@@ -325,6 +325,9 @@ class TemplateConverter(object):
 
         :param lineNr: number of line
         """
+        placeholders = re.findall("\$\w+$", self.fileLines[lineNr])
+        if placeholders:
+            self.fileLines[lineNr] = self.fileLines[lineNr].replace(placeholders[0], "{{"+placeholders[0][1:]+"}}")
         placeholders = re.findall("\$\w+.", self.fileLines[lineNr])
         fullPlaceholders=[]
         for placeholder in placeholders:

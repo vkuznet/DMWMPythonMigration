@@ -41,6 +41,12 @@ class TestConverter(unittest.TestCase):
         convertedLines = converter.getFileLines()
         self.assertEqual("({{from_res}}) aa", convertedLines[0])
 
+    def test_simplePlaceholders(self):
+        lines = ["$from"]
+        converter = TemplateConverter(lines, "test_notPlaceholder")
+        convertedLines = converter.getFileLines()
+        self.assertEqual("{{from}}", convertedLines[0])
+
     def test_placeholderFuncion(self):
         lines = ["$qoute($stuff.morestuff(anmore()))\n"]
         converter = TemplateConverter(lines, "test_placeholderFuncion")
